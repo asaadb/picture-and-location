@@ -2,8 +2,9 @@
   "devToolsPort": 19002,
   "expoServerPort": 19000,
   "packagerPort": 19001,
-  "packagerPid": 8324,
+  "packagerPid": 11276,
   "expoServerNgrokUrl": "https://w5-bqc.anonymous.picture-and-location.exp.direct",
   "packagerNgrokUrl": "https://packager.w5-bqc.anonymous.picture-and-location.exp.direct",
-  "ngrokPid": 15600
+  "ngrokPid": 3400,
+  "webpackServerPort": null
 }
