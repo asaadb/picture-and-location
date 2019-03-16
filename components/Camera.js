@@ -2,8 +2,11 @@ import React from "react";
 import { Text, View, TouchableOpacity } from "react-native";
 import { Camera, Permissions } from "expo";
 import { FontAwesome, MaterialCommunityIcons } from "@expo/vector-icons";
+import uuid from "uuid";
+import { addPicture } from "../actions";
+import { connect } from "react-redux";
 
-export default class CameraComponent extends React.Component {
+class CameraComponent extends React.Component {
   state = {
     hasCameraPermission: null,
     type: Camera.Constants.Type.back
@@ -13,8 +16,25 @@ export default class CameraComponent extends React.Component {
     const { status } = await Permissions.askAsync(Permissions.CAMERA);
     this.setState({ hasCameraPermission: status === "granted" });
   }
-
+  snapPhoto = async () => {
+    console.log("Button Pressed");
+    const { dispatch } = this.props;
+    if (this.camera) {
+      console.log("Taking photo");
+      const options = {
+        quality: 1,
+        base64: true,
+        fixOrientation: true,
+        exif: true
+      };
+      this.camera.takePictureAsync(options).then(photo => {
+        photo.exif.Orientation = 1;
+        dispatch(addPicture({ id: uuid(), photo }));
+      });
+    }
+  };
   render() {
+    console.log("The props: ", this.props);
     const { hasCameraPermission } = this.state;
     if (hasCameraPermission === null) {
       return <View />;
@@ -23,7 +43,13 @@ export default class CameraComponent extends React.Component {
     } else {
       return (
         <View style={{ flex: 1 }}>
-          <Camera style={{ flex: 1 }} type={this.state.type}>
+          <Camera
+            style={{ flex: 1 }}
+            type={this.state.type}
+            ref={ref => {
+              this.camera = ref;
+            }}
+          >
             <View style={{ flex: 1, justifyContent: "space-between" }}>
               <View
                 style={{
@@ -69,7 +95,7 @@ export default class CameraComponent extends React.Component {
               <View
                 style={{ alignItems: "center", justifyContent: "flex-start" }}
               >
-                <TouchableOpacity>
+                <TouchableOpacity onPress={this.snapPhoto.bind(this)}>
                   <MaterialCommunityIcons
                     name="circle-outline"
                     style={{ color: "white", fontSize: 100 }}
@@ -95,3 +121,9 @@ export default class CameraComponent extends React.Component {
     }
   }
 }
+function mapStateToProps(pictures) {
+  return {
+    pictures
+  };
+}
+export default connect()(CameraComponent);
