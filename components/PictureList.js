@@ -25,7 +25,9 @@ class PictureList extends React.Component {
       <View style={styles.container}>
         {this.props.pictures.map(pic => (
           <View key={pic.id}>
-            <Text>{pic.id}</Text>
+            <Text>Id: {pic.id}</Text>
+            <Text>Longitude: {pic.coords.longitude}</Text>
+            <Text>Latitude: {pic.coords.latitude}</Text>
             <Image
               source={{ uri: pic.photo.uri, isStatic: true }}
               style={{ width: 100, height: 100 }}

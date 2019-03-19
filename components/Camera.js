@@ -1,27 +1,35 @@
 import React from "react";
 import { Text, View, TouchableOpacity, StyleSheet } from "react-native";
-import { Camera, Permissions } from "expo";
-import { FontAwesome, MaterialCommunityIcons, Foundation } from "@expo/vector-icons";
+import { Camera, Permissions, Location } from "expo";
+import {
+  FontAwesome,
+  MaterialCommunityIcons,
+  Foundation
+} from "@expo/vector-icons";
 import uuid from "uuid";
 import { addPicture } from "../actions";
 import { connect } from "react-redux";
 
 class CameraComponent extends React.Component {
-
   state = {
     hasCameraPermission: null,
+    hasLocationPermission: null,
     type: Camera.Constants.Type.back
   };
 
   async componentDidMount() {
-    const { status } = await Permissions.askAsync(Permissions.CAMERA);
-    this.setState({ hasCameraPermission: status });
+    const camera = await Permissions.askAsync(Permissions.CAMERA);
+    const location = await Permissions.askAsync(Permissions.LOCATION);
+    this.setState({
+      hasCameraPermission: camera.status,
+      hasLocationPermission: location.status
+    });
   }
 
   askPermission = () => {
     Permissions.askAsync(Permissions.CAMERA)
       .then(({ status }) => {
-        this.setState(() => ({ hasCameraPermission:status }));
+        this.setState(() => ({ hasCameraPermission: status }));
       })
       .catch(error => console.warn("error asking camera permission: ", error));
   };
@@ -39,14 +47,21 @@ class CameraComponent extends React.Component {
       };
       this.camera.takePictureAsync(options).then(photo => {
         photo.exif.Orientation = 1;
-        dispatch(addPicture({ id: uuid(), photo }));
+        Location.getCurrentPositionAsync({ enableHighAccuracy: false, maximumAge: 15000 })
+          .then(({ coords }) => {
+            dispatch(addPicture({ id: uuid(), photo, coords }));
+          }
+        )
+        .catch(error => {
+          console.log('Getting loacation error: ', error);
+        });
       });
     }
   };
 
   render() {
     console.log("The props: ", this.props);
-    const { hasCameraPermission } = this.state;
+    const { hasCameraPermission, hasLocationPermission } = this.state;
     if (hasCameraPermission === "undetermined") {
       return (
         <View style={styles.center}>
@@ -65,6 +80,28 @@ class CameraComponent extends React.Component {
           <Text>
             You denied your camera. You can fix this by visiting your settings
             and enabling camera for this app.
+          </Text>
+        </View>
+      );
+    }
+    if (hasLocationPermission === "undetermined") {
+      return (
+        <View style={styles.center}>
+          <Foundation name="alert" size={50} />
+          <Text>You need to enable the location services for this app.</Text>
+          <TouchableOpacity style={styles.button} onPress={this.askPermission}>
+            <Text style={styles.buttonText}>Enable</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+    if (hasLocationPermission === "denied") {
+      return (
+        <View style={styles.center}>
+          <Foundation name="alert" size={50} />
+          <Text>
+            You denied your location. You can fix this by visiting your settings
+            and enabling location services for this app.
           </Text>
         </View>
       );
